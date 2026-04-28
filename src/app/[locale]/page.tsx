@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { Search, BookOpen, Users, Bookmark, Languages, Sparkles, Loader2, X, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
@@ -12,6 +13,7 @@ export default function IndexPage() {
   const t = useTranslations('Index');
   const c = useTranslations('Common');
   const locale = useLocale();
+  const router = useRouter();
 
   const [query, setQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
