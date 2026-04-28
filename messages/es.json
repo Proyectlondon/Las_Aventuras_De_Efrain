@@ -1,0 +1,88 @@
+{
+  "Index": {
+    "title": "Efraín: Explorador de la Palabra",
+    "subtitle": "Descubre los tesoros de la Biblia Hebrea",
+    "searchPlaceholder": "Escribe una palabra (ej. Shalom, Jesed)...",
+    "searchButton": "Buscar en la Concordancia"
+  },
+  "Common": {
+    "loading": "Cargando aventura...",
+    "save": "Guardar Cuento",
+    "saved": "¡Cuento Guardado!",
+    "ageGroups": {
+      "toddler": "Primera infancia (0-2 años)",
+      "preschool": "Preescolar (3-5 años)",
+      "middle": "Niñez media (6-11 años)"
+    },
+    "characters": {
+      "efrain": {
+        "name": "Efraín",
+        "description": "Un niño explorador de 9 años con un corazón lleno de preguntas y valentía. Le encanta descubrir tesoros en la Biblia Hebrea."
+      },
+      "jesus": {
+        "name": "Jesús",
+        "description": "El Maestro y Salvador. Siempre tiene palabras de amor y verdad para Efraín y todos los niños."
+      },
+      "abuela": {
+        "name": "Abuela",
+        "description": "La sabia de la familia. Cuenta las mejores historias y siempre sabe cómo relacionar la Palabra con la vida diaria."
+      },
+      "samuel": {
+        "name": "Samuel",
+        "description": "El mejor amigo de Efraín. Juntos viven grandes aventuras mientras aprenden sobre las promesas de Jehová."
+      },
+      "susana": {
+        "name": "Susana",
+        "description": "La hermana pequeña de Efraín. Es muy curiosa y siempre está lista para escuchar un nuevo cuento."
+      },
+      "abuelo": {
+        "name": "Abuelo",
+        "description": "El guardián de las herramientas y de las tradiciones. Siempre enseña a Efraín a cuidar la tierra con amor."
+      },
+      "mama": {
+        "name": "Mamá",
+        "description": "El corazón del hogar. Sus abrazos y su fe guían a Efraín en cada paso de sus aventuras."
+      },
+      "papa": {
+        "name": "Papá",
+        "description": "Un hombre trabajador y valiente. Le enseña a Efraín que la fuerza viene de confiar en Jehová."
+      },
+      "asno": {
+        "name": "Burrito",
+        "description": "El compañero fiel de carga. Nos recuerda la humildad y el servicio en las historias bíblicas."
+      },
+      "oveja": {
+        "name": "Ovejita",
+        "description": "Pequeña y alegre. Nos enseña sobre el Gran Pastor que siempre nos cuida y nos protege."
+      },
+      "caballo": {
+        "name": "Caballito",
+        "description": "Fuerte y veloz. Representa la nobleza y la fuerza que Jehová nos da para correr nuestras carreras."
+      },
+      "chivo": {
+        "name": "Chivito",
+        "description": "Travieso y saltarín. Nos recuerda la alegría de vivir en la creación de nuestro Creador."
+      },
+      "collie": {
+        "name": "Collie",
+        "description": "El perro guardián más inteligente. Siempre atento para cuidar a Efraín y avisar de cualquier peligro."
+      },
+      "galli_pato": {
+        "name": "Galli-Pato",
+        "description": "Los amigos plumíferos de la granja que despiertan a todos con alegría cada mañana."
+      },
+      "najar": {
+        "name": "Najar",
+        "description": "A wise friend who knows many secrets of nature and ancient stories."
+      },
+      "toro": {
+        "name": "Bull",
+        "description": "Imposing and hard-working. Symbol of perseverance in the work we do for Jehovah."
+      },
+      "vaca": {
+        "name": "Cow",
+        "description": "Calm and generous. Teaches us about provision and peace in the countryside."
+      }
+    }
+  }
+}

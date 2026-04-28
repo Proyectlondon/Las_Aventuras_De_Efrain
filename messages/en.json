@@ -1,0 +1,88 @@
+{
+  "Index": {
+    "title": "Efraín: Word Explorer",
+    "subtitle": "Discover the treasures of the Hebrew Bible",
+    "searchPlaceholder": "Type a word (e.g. Shalom, Hesed)...",
+    "searchButton": "Search in Concordance"
+  },
+  "Common": {
+    "loading": "Loading adventure...",
+    "save": "Save Story",
+    "saved": "Story Saved!",
+    "ageGroups": {
+      "toddler": "Early Childhood (0-2 years)",
+      "preschool": "Preschool (3-5 years)",
+      "middle": "Middle Childhood (6-11 years)"
+    },
+    "characters": {
+      "efrain": {
+        "name": "Efrain",
+        "description": "A 9-year-old explorer boy with a heart full of questions and bravery. He loves discovering treasures in the Hebrew Bible."
+      },
+      "jesus": {
+        "name": "Jesus",
+        "description": "The Teacher and Savior. He always has words of love and truth for Efrain and all children."
+      },
+      "abuela": {
+        "name": "Grandmother",
+        "description": "The wise one of the family. She tells the best stories and always knows how to relate the Word to daily life."
+      },
+      "samuel": {
+        "name": "Samuel",
+        "description": "Efrain's best friend. Together they live great adventures while learning about Jehovah's promises."
+      },
+      "susana": {
+        "name": "Susana",
+        "description": "Efrain's little sister. She is very curious and always ready to listen to a new story."
+      },
+      "abuelo": {
+        "name": "Grandfather",
+        "description": "The guardian of tools and traditions. He always teaches Efrain to care for the land with love."
+      },
+      "mama": {
+        "name": "Mother",
+        "description": "The heart of the home. Her hugs and faith guide Efrain in every step of his adventures."
+      },
+      "papa": {
+        "name": "Father",
+        "description": "A hard-working and brave man. He teaches Efrain that strength comes from trusting in Jehovah."
+      },
+      "asno": {
+        "name": "Little Donkey",
+        "description": "The faithful companion. Reminds us of humility and service in biblical stories."
+      },
+      "oveja": {
+        "name": "Little Sheep",
+        "description": "Small and cheerful. Teaches us about the Good Shepherd who always cares for and protects us."
+      },
+      "caballo": {
+        "name": "Little Horse",
+        "description": "Strong and fast. Represents the nobility and strength that Jehovah gives us to run our races."
+      },
+      "chivo": {
+        "name": "Little Goat",
+        "description": "Playful and bouncy. Reminds us of the joy of living in our Creator's creation."
+      },
+      "collie": {
+        "name": "Collie",
+        "description": "The smartest watchdog. Always attentive to take care of Efrain and warn of any danger."
+      },
+      "galli_pato": {
+        "name": "Galli-Pato",
+        "description": "The feathery friends of the farm who wake everyone up with joy every morning."
+      },
+      "najar": {
+        "name": "Najar",
+        "description": "A wise friend who knows many secrets of nature and ancient stories."
+      },
+      "toro": {
+        "name": "Bull",
+        "description": "Imposing and hard-working. Symbol of perseverance in the work we do for Jehovah."
+      },
+      "vaca": {
+        "name": "Cow",
+        "description": "Calm and generous. Teaches us about provision and peace in the countryside."
+      }
+    }
+  }
+}
