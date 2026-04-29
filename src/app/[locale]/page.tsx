@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { Search, BookOpen, Users, Bookmark, Languages, Sparkles, Loader2, X, Heart } from 'lucide-react';
+import { Search, BookOpen, Users, Bookmark, Languages, Sparkles, Loader2, X, Heart, BookHeart, LogOut, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -123,62 +123,64 @@ export default function IndexPage() {
 
     if (error) {
       console.error('Error saving to Supabase:', error);
-      alert('Error al guardar en la nube. ¿Creaste la tabla en Supabase?');
+      alert('Error al guardar en la nube.');
     } else {
       alert(c('saved'));
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-sky-50 to-stone-50">
-      {/* Header */}
-      <header className="p-6 flex justify-between items-center bg-white/50 backdrop-blur-md sticky top-0 z-10 border-b border-stone-200/50">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-amber-600/20">
-            E
-          </div>
-          <span className="font-bold text-stone-800 text-xl tracking-tight hidden sm:block">
-            Efraín
-          </span>
-        </div>
-        <nav className="flex items-center gap-4 md:gap-6">
-          <Link href={`/${locale}/characters`} className="flex items-center gap-2 text-stone-600 hover:text-amber-700 transition-colors font-bold">
-            <Users size={20} />
-            <span className="hidden lg:inline">Personajes</span>
-          </Link>
-          <Link href={`/${locale}/library`} className="flex items-center gap-2 text-stone-600 hover:text-amber-700 transition-colors font-bold">
-            <Bookmark size={20} />
-            <span className="hidden lg:inline">Biblioteca</span>
-          </Link>
-          
-          <div className="h-6 w-px bg-stone-200 hidden sm:block"></div>
-
-          {user ? (
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center text-amber-700 font-bold border border-amber-200 shadow-sm">
-                {user.email?.[0].toUpperCase()}
+    <div className="min-h-screen flex flex-col bg-pastoral-pattern">
+      {/* ─── NAVBAR ─── */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <Link href={`/${locale}`} className="flex items-center gap-2 group">
+              <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-[#C8953D] to-[#C17B5B] flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+                <BookHeart className="w-5 h-5 text-white" />
               </div>
-              <button 
-                onClick={handleSignOut}
-                className="hidden sm:block text-stone-500 hover:text-red-600 font-bold text-sm transition-colors"
-              >
-                Cerrar Sesión
-              </button>
-            </div>
-          ) : (
-            <Link 
-              href={`/${locale}/auth`}
-              className="px-6 py-2 bg-stone-900 text-white rounded-full font-bold hover:bg-stone-800 transition-all shadow-lg shadow-stone-900/10 active:scale-95"
-            >
-              Entrar
+              <span className="text-lg font-bold text-[#6B4F3A] hidden sm:block">
+                Efraín
+              </span>
             </Link>
-          )}
+            <nav className="hidden md:flex items-center gap-1">
+              <Link href={`/${locale}/characters`} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition-all">
+                <Users size={16} /> Personajes
+              </Link>
+              <Link href={`/${locale}/scenes`} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition-all">
+                <MapPin size={16} /> Escenarios
+              </Link>
+              <Link href={`/${locale}/library`} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition-all">
+                <Bookmark size={16} /> Biblioteca
+              </Link>
+            </nav>
 
-          <button className="px-3 py-2 bg-white border border-stone-200 rounded-xl text-stone-600 font-bold hover:shadow-sm transition-all flex items-center gap-2">
-            <Languages size={18} />
-            <span className="hidden sm:inline">{locale.toUpperCase()}</span>
-          </button>
-        </nav>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => router.push(`/${locale === 'es' ? 'en' : 'es'}`)}
+                className="px-3 py-2 bg-white border border-stone-200 rounded-xl text-stone-600 font-bold hover:shadow-sm transition-all flex items-center gap-2"
+              >
+                <Languages size={18} />
+                <span className="hidden sm:inline">{locale.toUpperCase()}</span>
+              </button>
+              {user ? (
+                <div className="flex items-center gap-4">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#7D8B69] to-[#C8953D] flex items-center justify-center text-white font-bold shadow-sm">
+                    {user.email?.charAt(0).toUpperCase()}
+                  </div>
+                  <button onClick={handleSignOut} className="text-sm font-bold text-stone-500 hover:text-red-500 flex items-center gap-1">
+                    <LogOut size={16} />
+                    <span className="hidden sm:inline">Salir</span>
+                  </button>
+                </div>
+              ) : (
+                <Link href={`/${locale}/auth`} className="text-sm font-bold bg-[#C8953D] text-white px-4 py-2 rounded-xl hover:bg-[#A67C52] transition-colors shadow-sm">
+                  Entrar
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
       </header>
 
       {/* Main Content */}
@@ -218,19 +220,33 @@ export default function IndexPage() {
           </div>
 
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-             {Object.keys(c.raw('ageGroups')).map((key) => (
-               <button 
-                 key={key} 
-                 onClick={() => setSelectedAge(key)}
-                 className={`px-6 py-3 rounded-full transition-all border font-semibold ${
-                   selectedAge === key 
-                   ? 'bg-amber-600 text-white border-amber-600 shadow-md scale-105' 
-                   : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
-                 }`}
-               >
-                 {c(`ageGroups.${key}`)}
-               </button>
-             ))}
+             {Object.keys(c.raw('ageGroups')).map((key) => {
+               // Map keys to specific colors based on beta app styles
+               let bgActive = 'bg-[#C8953D] text-white';
+               let bgInactive = 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50';
+               
+               if (key === 'preschool') {
+                 bgActive = 'bg-gradient-to-r from-amber-300 to-orange-300 text-amber-900 border-amber-300';
+               } else if (key === 'children') {
+                 bgActive = 'bg-gradient-to-r from-[#7D8B69] to-green-400 text-white border-[#7D8B69]';
+               } else if (key === 'teens') {
+                 bgActive = 'bg-gradient-to-r from-[#C17B5B] to-rose-400 text-white border-[#C17B5B]';
+               }
+
+               return (
+                 <button 
+                   key={key} 
+                   onClick={() => setSelectedAge(key)}
+                   className={`px-6 py-3 rounded-2xl transition-all border-2 font-bold flex items-center gap-2 ${
+                     selectedAge === key 
+                     ? `${bgActive} shadow-md scale-105` 
+                     : bgInactive
+                   }`}
+                 >
+                   {c(`ageGroups.${key}`)}
+                 </button>
+               );
+             })}
           </div>
         </motion.div>
 
@@ -240,9 +256,9 @@ export default function IndexPage() {
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-r from-amber-600 to-amber-700 rounded-3xl p-8 mb-8 text-white shadow-2xl shadow-amber-700/20 relative overflow-hidden group"
+              className="card-warm-gradient border-2 border-[#E8D5BC] rounded-3xl p-8 mb-8 text-[#3D2B1F] shadow-xl relative overflow-hidden group"
             >
-              <div className="absolute top-0 right-0 p-8 opacity-20 rotate-12 transition-transform group-hover:rotate-0">
+              <div className="absolute top-0 right-0 p-8 opacity-10 text-[#C8953D] rotate-12 transition-transform group-hover:rotate-0">
                 <Sparkles size={120} />
               </div>
               <div className="relative z-10">

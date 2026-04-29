@@ -80,8 +80,66 @@
         "description": "Imposing and hard-working. Symbol of perseverance in the work we do for Jehovah."
       },
       "vaca": {
-        "name": "Cow",
+        "name": "Vaca",
         "description": "Calm and generous. Teaches us about provision and peace in the countryside."
+      },
+      "nina": {
+        "name": "Niña",
+        "description": "Una niña del pueblo que aprende junto a Efraín las maravillosas lecciones de la Biblia."
+      },
+      "tejedora": {
+        "name": "Tejedora",
+        "description": "Una mujer talentosa que teje telas hermosas con paciencia y dedicación."
+      },
+      "vendedor": {
+        "name": "Vendedor",
+        "description": "Un hombre amable del mercado que nos enseña sobre la honestidad en los negocios."
+      },
+      "ciervo": {
+        "name": "Ciervo",
+        "description": "Un ciervo grácil que simboliza la sed del alma por Dios."
+      },
+      "cerdo": {
+        "name": "Cerdo",
+        "description": "Un cerdo que aparece en las historias del poblado. Nos enseña sobre la pureza y la obediencia."
+      },
+      "ternero": {
+        "name": "Ternero",
+        "description": "Un pequeño ternero que representa la inocencia y la alegría de la creación."
+      }
+    },
+    "scenes": {
+      "casa_cocina": {
+        "name": "Cocina",
+        "description": "La cocina de una hogar bíblico donde la familia se reúne para preparar alimentos y compartir juntos."
+      },
+      "casa_sala": {
+        "name": "Sala de la Casa",
+        "description": "La sala principal donde la familia recibe visitas y comparte momentos de enseñanza bíblica."
+      },
+      "casa_habitacion": {
+        "name": "Habitación",
+        "description": "Un lugar de descanso donde los niños escuchan historias de la Biblia antes de dormir."
+      },
+      "casa_exterior": {
+        "name": "Exterior de la Casa",
+        "description": "El exterior de una casa bíblica con sus muros de piedra y patio, donde los niños juegan y aprenden."
+      },
+      "ciudad_mercado_1": {
+        "name": "Mercado de la Ciudad",
+        "description": "El bullicioso mercado donde se venden frutas, pan y especias."
+      },
+      "ciudad_mercado_2": {
+        "name": "Calles de la Ciudad",
+        "description": "Las calles empedradas de una ciudad antigua donde los comerciantes ofrecen sus productos."
+      },
+      "ciudad_mercado_3": {
+        "name": "Plaza del Mercado",
+        "description": "La plaza principal donde la comunidad se reúne para celebrar fiestas."
+      },
+      "ciudad_mercado_4": {
+        "name": "Puerta de la Ciudad",
+        "description": "La puerta de la ciudad era el lugar donde los ancianos se sentaban a juzgar."
       }
     }
   }

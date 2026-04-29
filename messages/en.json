@@ -82,6 +82,64 @@
       "vaca": {
         "name": "Cow",
         "description": "Calm and generous. Teaches us about provision and peace in the countryside."
+      },
+      "nina": {
+        "name": "Little Girl",
+        "description": "A village girl who learns alongside Ephraim the wonderful lessons of the Bible."
+      },
+      "tejedora": {
+        "name": "Weaver",
+        "description": "A talented woman who weaves beautiful fabrics with patience and dedication."
+      },
+      "vendedor": {
+        "name": "Merchant",
+        "description": "A kind man from the market who teaches us about honesty in business."
+      },
+      "ciervo": {
+        "name": "Deer",
+        "description": "A graceful deer that symbolizes the soul's thirst for God."
+      },
+      "cerdo": {
+        "name": "Pig",
+        "description": "A pig that appears in village stories. Teaches us about purity and obedience."
+      },
+      "ternero": {
+        "name": "Calf",
+        "description": "A small calf representing the innocence and joy of creation."
+      }
+    },
+    "scenes": {
+      "casa_cocina": {
+        "name": "Kitchen",
+        "description": "The kitchen of a biblical home where the family gathers to prepare food and share together."
+      },
+      "casa_sala": {
+        "name": "Living Room",
+        "description": "The main room where the family receives visitors and shares moments of biblical teaching."
+      },
+      "casa_habitacion": {
+        "name": "Bedroom",
+        "description": "A place of rest where children listen to Bible stories before sleeping."
+      },
+      "casa_exterior": {
+        "name": "House Exterior",
+        "description": "The exterior of a biblical house with stone walls and courtyard, where children play and learn."
+      },
+      "ciudad_mercado_1": {
+        "name": "City Market",
+        "description": "The bustling market where fruits, bread and spices are sold."
+      },
+      "ciudad_mercado_2": {
+        "name": "City Streets",
+        "description": "The cobblestone streets of an ancient city where merchants offer their wares."
+      },
+      "ciudad_mercado_3": {
+        "name": "Market Square",
+        "description": "The main square where the community gathers to celebrate festivals."
+      },
+      "ciudad_mercado_4": {
+        "name": "City Gate",
+        "description": "The city gate was where elders sat to judge."
       }
     }
   }

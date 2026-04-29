@@ -1,26 +1,125 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-nunito);
   --font-mono: var(--font-geist-mono);
+  
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-amber: #C8953D;
+  --color-sage: #7D8B69;
+  --color-terracotta: #C17B5B;
+  --color-cream: #FDF8F0;
+  --color-warm-white: #FFFBF5;
+  --color-soft-gold: #F5E6C8;
+  --color-deep-brown: #3D2B1F;
+  --color-warm-brown: #6B4F3A;
+  --color-light-sage: #E8EDDF;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --radius: 0.75rem;
+  --background: #FDF8F0;
+  --foreground: #3D2B1F;
+  --card: #FFFBF5;
+  --card-foreground: #3D2B1F;
+  --primary: #C8953D;
+  --primary-foreground: #FFFBF5;
+  --secondary: #7D8B69;
+  --secondary-foreground: #FFFBF5;
+  --muted: #F5E6C8;
+  --muted-foreground: #8B7355;
+  --accent: #C17B5B;
+  --accent-foreground: #FFFBF5;
+  --border: #E8D5BC;
+  --input: #E8D5BC;
+  --ring: #C8953D;
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F5E6C8;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C8953D;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #A67C52;
+}
+
+/* Custom animations */
+@keyframes gentle-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.animate-float { animation: gentle-float 3s ease-in-out infinite; }
+.animate-fade-in-up { animation: fade-in-up 0.6s ease-out forwards; }
+.animate-pulse-soft { animation: pulse-soft 3s ease-in-out infinite; }
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Pastoral background pattern */
+.bg-pastoral-pattern {
+  background-color: #FDF8F0;
+  background-image:
+    radial-gradient(ellipse at 10% 90%, rgba(125, 139, 105, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 10%, rgba(200, 149, 61, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(193, 123, 91, 0.04) 0%, transparent 60%);
+}
+
+/* Warm card gradient */
+.card-warm-gradient {
+  background: linear-gradient(135deg, #FFFBF5 0%, #FDF8F0 50%, #FFF5EB 100%);
+}
+
+.hero-gradient {
+  background: linear-gradient(180deg, rgba(61, 43, 31, 0.15) 0%, rgba(61, 43, 31, 0.05) 40%, rgba(200, 149, 61, 0.1) 100%);
 }

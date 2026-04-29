@@ -36,7 +36,7 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} className="h-full">
-      <body className="min-h-full bg-stone-50 text-stone-900 selection:bg-sky-100 selection:text-sky-900">
+      <body className="min-h-full bg-pastoral-pattern text-stone-900 selection:bg-sky-100 selection:text-sky-900">
         <NextIntlClientProvider messages={messages}>
           {children}
         </NextIntlClientProvider>
