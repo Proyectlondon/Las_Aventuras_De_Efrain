@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, Sparkles } from 'lucide-react';
 
+const characters = [
   // MAIN
   { id: 'efrain', category: 'main', image: '/characters/portraits/efrain.png', color: 'bg-[#C8953D]/20 border-[#C8953D]' },
   { id: 'jesus', category: 'main', image: '/characters/portraits/jesus.png', color: 'bg-[#F5E6C8]/40 border-[#F5E6C8]' },
