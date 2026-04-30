@@ -1,61 +1,76 @@
 import { NextResponse } from 'next/server';
 
+async function callLLM(prompt: string, apiKey: string): Promise<string> {
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+      'HTTP-Referer': 'https://efrain-app.vercel.app',
+      'X-Title': 'Efrain Biblical Search',
+    },
+    body: JSON.stringify({
+      model: 'google/gemini-2.0-flash-lite-preview-02-05:free',
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: 'json_object' },
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    console.error('OpenRouter error in search:', err);
+    throw new Error(`OpenRouter failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices[0].message.content;
+  return content.replace(/```json\n?|```/g, '').trim();
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('q');
+  const apiKey = process.env.OPENROUTER_API_KEY;
 
   if (!query) {
     return NextResponse.json({ error: 'Missing query' }, { status: 400 });
   }
 
+  if (!apiKey) {
+    return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
+  }
+
   try {
-    // If query looks like a reference (e.g., Genesis 1:1), fetch text directly
-    const isReference = /^[A-Za-z]+\s\d+/.test(query);
-    
-    if (isReference) {
-      const formattedRef = query.replace(/\s/g, '.').replace(':', '.');
-      const response = await fetch(`https://www.sefaria.org/api/texts/${formattedRef}?context=0&version=hebrew|Tanach with Nikkud`);
-      const data = await response.json();
+    const prompt = `
+      Act as an expert in the Hebrew Bible. The user searched for the following word or concept in Spanish: "${query}".
+      Find exactly 3 relevant biblical verses from the Tanakh (Hebrew Bible) that relate to this concept.
       
-      const results = [{
-        ref: data.ref,
-        he: Array.isArray(data.he) ? data.he[0] : data.he,
-        en: Array.isArray(data.text) ? data.text[0] : data.text,
-      }].map(r => ({
-        ...r,
-        he: (r.he || "").replace(/<[^>]+>/g, ''),
-        en: (r.en || "").replace(/<[^>]+>/g, ''),
-      }));
+      Return a JSON object with a single "results" array. Each item in the array MUST have:
+      - "ref": The biblical reference in Spanish (e.g., "Génesis 1:1").
+      - "he": The exact original Hebrew text of the verse (with nikkud).
+      - "en": The translation of the verse in SPANISH (do not use English).
       
-      return NextResponse.json({ results });
+      Output ONLY valid JSON.
+    `;
+
+    const jsonString = await callLLM(prompt, apiKey);
+    const parsedData = JSON.parse(jsonString);
+
+    if (!parsedData.results || !Array.isArray(parsedData.results)) {
+      throw new Error('Invalid JSON format from LLM');
     }
 
-    // Otherwise, attempt a keyword search
-    // We'll use a slightly different approach for keyword search
-    const searchUrl = `https://www.sefaria.org/api/v2/search/text/Tanakh/_all/${encodeURIComponent(query)}?size=5`;
-    const response = await fetch(searchUrl);
-    
-    if (!response.ok) {
-       // Fallback to a direct fetch of a related chapter if search is down
-       return NextResponse.json({ 
-         results: [{
-           ref: "Génesis 1:1",
-           he: "בְּרֵאשִׁית בָּרָא אֱלֹהִים אֵת הַשָּׁמַיִם וְאֵת הָאָרֶץ׃",
-           en: "In the beginning God created the heaven and the earth."
-         }] 
-       });
-    }
-
-    const data = await response.json();
-    const results = data.hits?.hits?.map((hit: any) => ({
-      ref: hit._source.ref,
-      he: hit._source.he.replace(/<[^>]+>/g, ''),
-      en: hit._source.text.replace(/<[^>]+>/g, ''),
-    })) || [];
-
-    return NextResponse.json({ results });
+    return NextResponse.json({ results: parsedData.results });
   } catch (error) {
     console.error('Search error:', error);
-    return NextResponse.json({ error: 'Search failed' }, { status: 500 });
+    
+    // Fallback in case of failure
+    return NextResponse.json({ 
+      results: [{
+        ref: "Génesis 1:1",
+        he: "בְּרֵאשִׁית בָּרָא אֱלֹהִים אֵת הַשָּׁמַיִם וְאֵת הָאָרֶץ׃",
+        en: "En el principio creó Dios los cielos y la tierra."
+      }] 
+    });
   }
 }
