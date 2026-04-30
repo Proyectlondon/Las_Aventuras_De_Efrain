@@ -310,23 +310,46 @@ export default function IndexPage() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-12">
+      <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-8 relative">
+        {/* Floating decorative companions */}
+        <div className="floating-companion top-20 left-4 animate-float" style={{ animationDelay: '0s' }}>
+          <Image src="/characters/oveja.png" alt="" width={60} height={60} className="opacity-20" />
+        </div>
+        <div className="floating-companion top-40 right-4 animate-float" style={{ animationDelay: '1.5s' }}>
+          <Image src="/characters/collie.png" alt="" width={55} height={55} className="opacity-15" />
+        </div>
+
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
+          className="text-center mb-10"
         >
-          <h1 className="text-5xl md:text-7xl font-bold text-stone-900 mb-6 tracking-tight">
+          {/* Efraín Mascot */}
+          <motion.div 
+            className="mb-6 inline-block"
+            animate={{ y: [0, -8, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <div className="relative w-28 h-28 md:w-36 md:h-36 mx-auto">
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-200 via-amber-100 to-green-100 animate-pulse" style={{ animationDuration: '4s' }} />
+              <Image src="/characters/efrain_final.png" alt="Efraín" fill className="object-cover rounded-full relative z-10 border-4 border-white shadow-xl" />
+              <div className="absolute -bottom-1 -right-1 z-20 bg-amber-500 rounded-full p-2 shadow-lg border-2 border-white">
+                <Sparkles size={16} className="text-white" />
+              </div>
+            </div>
+          </motion.div>
+
+          <h1 className="text-4xl md:text-6xl font-black text-stone-900 mb-3 tracking-tight">
             {t('title')}
           </h1>
-          <p className="text-xl text-stone-600 mb-12 max-w-2xl mx-auto">
-            {t('subtitle')}
+          <p className="text-lg md:text-xl text-stone-500 mb-8 max-w-xl mx-auto font-medium">
+            {t('subtitle')} ✨
           </p>
 
-          {/* Search Bar */}
-          <div className="relative max-w-2xl mx-auto group">
-            <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-stone-400 group-focus-within:text-amber-600 transition-colors">
-              <Search size={24} />
+          {/* Adventure Search Bar */}
+          <div className="search-adventure relative max-w-2xl mx-auto">
+            <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-amber-400 z-10">
+              <Search size={22} />
             </div>
             <input 
               type="text" 
@@ -334,44 +357,43 @@ export default function IndexPage() {
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               placeholder={t('searchPlaceholder')}
-              className="w-full pl-14 pr-36 py-5 bg-white border-2 border-stone-200 rounded-2xl shadow-xl shadow-stone-200/40 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 outline-none text-xl transition-all text-stone-900"
+              className="w-full pl-14 pr-40 py-5 bg-white border-2 border-amber-200 rounded-2xl shadow-lg shadow-amber-100/40 focus:border-amber-400 focus:ring-4 focus:ring-amber-400/15 outline-none text-lg transition-all text-stone-900 placeholder:text-stone-400"
             />
             <button 
               onClick={handleSearch}
               disabled={isSearching}
-              className="absolute right-3 top-2 bottom-2 px-6 bg-amber-600 text-white font-bold rounded-xl hover:bg-amber-700 transition-colors shadow-lg shadow-amber-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="absolute right-2.5 top-2 bottom-2 px-6 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-black rounded-xl hover:from-amber-600 hover:to-amber-700 transition-all shadow-lg shadow-amber-500/25 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
             >
-              {isSearching ? <Loader2 className="animate-spin" /> : t('searchButton')}
+              {isSearching ? <Loader2 className="animate-spin" size={20} /> : (
+                <>
+                  <Sparkles size={16} />
+                  {locale === 'es' ? '¡Buscar!' : 'Search!'}
+                </>
+              )}
             </button>
           </div>
 
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-             {Object.keys(c.raw('ageGroups')).map((key) => {
-               // Map keys to specific colors based on beta app styles
-               let bgActive = 'bg-[#C8953D] text-white';
-               
-               if (key === 'toddler') {
-                 bgActive = 'bg-gradient-to-r from-amber-300 to-orange-300 text-amber-900 border-amber-300';
-               } else if (key === 'preschool') {
-                 bgActive = 'bg-gradient-to-r from-[#7D8B69] to-green-400 text-white border-[#7D8B69]';
-               } else if (key === 'middle') {
-                 bgActive = 'bg-gradient-to-r from-[#C17B5B] to-rose-400 text-white border-[#C17B5B]';
-               }
+          {/* Age Group Pills */}
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            {Object.keys(c.raw('ageGroups')).map((key) => {
+              const emojis: Record<string, string> = { toddler: '🍼', preschool: '🌱', middle: '🌟' };
+              const pillClass = `age-pill age-pill--${key}`;
 
-               return (
-                 <button 
-                   key={key} 
-                   onClick={() => setSelectedAge(key)}
-                   className={`px-6 py-3 rounded-2xl transition-all border-2 font-bold flex items-center gap-2 ${
-                     selectedAge === key 
-                     ? `${bgActive} shadow-md scale-105` 
-                     : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
-                   }`}
-                 >
-                   {c(`ageGroups.${key}`)}
-                 </button>
-               );
-             })}
+              return (
+                <button 
+                  key={key} 
+                  onClick={() => setSelectedAge(key)}
+                  className={`${pillClass} ${
+                    selectedAge === key 
+                    ? 'active' 
+                    : 'bg-white text-stone-500 border-stone-200 hover:border-amber-300'
+                  }`}
+                >
+                  <span className="mr-1.5">{emojis[key]}</span>
+                  {c(`ageGroups.${key}`)}
+                </button>
+              );
+            })}
           </div>
         </motion.div>
 
@@ -381,25 +403,22 @@ export default function IndexPage() {
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="card-warm-gradient border-2 border-[#E8D5BC] rounded-3xl p-8 mb-8 text-[#3D2B1F] shadow-xl relative overflow-hidden group"
+              className="treasure-card mb-8 text-[#3D2B1F]"
             >
-              <div className="absolute top-0 right-0 p-8 opacity-10 text-[#C8953D] rotate-12 transition-transform group-hover:rotate-0">
-                <Sparkles size={120} />
-              </div>
               <div className="relative z-10">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-white/20 rounded-lg">
-                    <BookOpen size={24} />
+                  <div className="p-2.5 bg-amber-100 rounded-xl">
+                    <BookOpen size={22} className="text-amber-600" />
                   </div>
-                  <span className="font-bold tracking-widest uppercase text-sm opacity-80">Diccionario de Tesoros</span>
+                  <span className="font-black tracking-widest uppercase text-xs text-amber-700">📚 {locale === 'es' ? 'Diccionario de Tesoros' : 'Treasury Dictionary'}</span>
                 </div>
-                <h2 className="text-4xl font-bold mb-4">{analysis.title}</h2>
-                <p className="text-xl opacity-90 leading-relaxed mb-6 max-w-3xl">
+                <h2 className="text-3xl md:text-4xl font-black mb-4 text-stone-900">{analysis.title}</h2>
+                <p className="text-lg opacity-90 leading-relaxed mb-6 max-w-3xl">
                   {analysis.story}
                 </p>
-                <div className="inline-flex items-center gap-3 px-4 py-2 bg-white/10 rounded-xl border border-white/20">
-                   <Heart size={20} fill="currentColor" className="text-rose-300" />
-                   <span className="font-medium italic">{analysis.lesson}</span>
+                <div className="inline-flex items-center gap-3 px-5 py-3 bg-amber-50 rounded-2xl border border-amber-200">
+                   <Heart size={18} fill="currentColor" className="text-rose-400" />
+                   <span className="font-bold italic text-stone-700">{analysis.lesson}</span>
                 </div>
               </div>
             </motion.div>
@@ -408,28 +427,29 @@ export default function IndexPage() {
           {/* ─── GENERATION PROGRESS ─── */}
           {isGenerating && (
             <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              className="flex flex-col items-center justify-center py-16 gap-6"
+              initial={{ opacity: 0, scale: 0.9 }} 
+              animate={{ opacity: 1, scale: 1 }} 
+              className="generation-container"
             >
-              <div className="relative w-36 h-36 rounded-full bg-amber-100 border-4 border-white shadow-xl overflow-hidden">
-                 <Image src="/characters/efrain_final.png" alt="Efraín" fill className="object-cover" />
-                 <div className="absolute inset-0 bg-gradient-to-t from-amber-900/20 to-transparent" />
-                 <div className="absolute bottom-2 right-2 bg-white rounded-full p-1.5 shadow-lg">
-                   <Palette size={18} className="text-amber-600 animate-pulse" />
-                 </div>
+              <div className="generation-mascot">
+                <div className="generation-mascot-ring" />
+                <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full bg-amber-50 border-4 border-white shadow-xl overflow-hidden">
+                  <Image src="/characters/efrain_final.png" alt="Efraín" fill className="object-cover" />
+                </div>
               </div>
-              <p className="text-xl font-bold text-stone-800">{generationStep}</p>
+              <p className="text-xl font-black text-stone-800 mb-1">{generationStep}</p>
+              <p className="text-sm text-stone-400 mb-6 font-medium">
+                {locale === 'es' ? 'Efraín está preparando tu aventura...' : 'Efraín is preparing your adventure...'}
+              </p>
               
-              {/* Progress bar */}
-              <div className="w-full max-w-md">
+              <div className="w-full max-w-sm mx-auto">
                 <div className="generation-progress">
                   <div 
                     className="generation-progress-bar"
                     style={{ width: `${generationProgress}%` }}
                   />
                 </div>
-                <p className="text-sm text-stone-500 mt-2 text-center font-semibold">
+                <p className="text-xs text-amber-600 mt-2 text-center font-black">
                   {Math.round(generationProgress)}%
                 </p>
               </div>
@@ -530,17 +550,17 @@ export default function IndexPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
-                className="mt-8 bg-white rounded-3xl border border-stone-200 shadow-lg overflow-hidden"
+                className="mt-8 lesson-card"
               >
                 <div className="p-8 md:p-10">
                   {/* Lesson */}
                   <div className="flex items-start gap-5 mb-8">
-                    <div className="p-3 bg-amber-50 rounded-2xl text-amber-600 flex-shrink-0">
+                    <div className="p-3 bg-rose-50 rounded-2xl text-rose-400 flex-shrink-0 animate-bounce-soft" style={{ animationDuration: '3s' }}>
                       <Heart size={28} fill="currentColor" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-stone-800 mb-1 uppercase tracking-wide">
-                        {locale === 'es' ? 'Lección para el corazón' : 'Lesson for the heart'}
+                      <h3 className="text-base font-black text-stone-800 mb-2 uppercase tracking-widest">
+                        💛 {locale === 'es' ? 'Lección para el corazón' : 'Lesson for the heart'}
                       </h3>
                       <p className="text-lg text-stone-600 leading-relaxed italic">
                         &quot;{story.lesson}&quot;
@@ -549,19 +569,19 @@ export default function IndexPage() {
                   </div>
 
                   {/* Verses & Save */}
-                  <div className="flex flex-col sm:flex-row justify-between items-center gap-6 pt-6 border-t border-stone-100">
-                    <div className="flex flex-wrap justify-center gap-3">
+                  <div className="flex flex-col sm:flex-row justify-between items-center gap-6 pt-6 border-t border-amber-100">
+                    <div className="flex flex-wrap justify-center gap-2">
                       {story.verses?.map((v: string, i: number) => (
-                        <span key={i} className="px-4 py-2 bg-sky-50 text-sky-700 rounded-xl font-bold text-sm border border-sky-100 shadow-sm">
-                          {v}
+                        <span key={i} className="px-4 py-2 bg-sky-50 text-sky-700 rounded-full font-black text-xs border border-sky-200 shadow-sm">
+                          📖 {v}
                         </span>
                       ))}
                     </div>
                     <button 
                       onClick={handleSaveStory}
-                      className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-amber-600 text-white font-black rounded-2xl hover:bg-amber-700 transition-all shadow-xl shadow-amber-600/20 hover:-translate-y-1 active:translate-y-0"
+                      className="btn-create-story w-full sm:w-auto"
                     >
-                      <Bookmark size={20} />
+                      <Bookmark size={18} />
                       {c('save')}
                     </button>
                   </div>
@@ -575,40 +595,42 @@ export default function IndexPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="grid gap-6"
+              className="grid gap-5"
             >
-              <div className="flex items-center gap-4 mb-4">
-                <h2 className="text-2xl font-bold text-stone-800">Resultados encontrados</h2>
-                <div className="h-px flex-1 bg-stone-200"></div>
+              <div className="flex items-center gap-4 mb-2">
+                <span className="text-2xl">📖</span>
+                <h2 className="text-xl font-black text-stone-800">
+                  {locale === 'es' ? '¡Tesoros encontrados!' : 'Treasures found!'}
+                </h2>
+                <div className="h-px flex-1 bg-amber-200"></div>
               </div>
               
               {results.map((res, i) => (
                 <motion.div 
                   key={i}
-                  whileHover={{ scale: 1.01 }}
-                  className="bg-white p-8 rounded-3xl border border-stone-200 shadow-sm hover:shadow-md transition-all group relative overflow-hidden"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="result-card"
                 >
-                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-100 transition-opacity">
-                    <Sparkles className="text-amber-600" size={32} />
-                  </div>
-                  <div className="flex flex-col md:flex-row gap-8 items-start">
+                  <div className="flex flex-col md:flex-row gap-6 items-start">
                     <div className="flex-1">
-                      <span className="text-amber-600 font-bold text-sm uppercase tracking-widest mb-2 block">
-                        {res.ref}
+                      <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 text-amber-700 font-black text-xs uppercase tracking-widest rounded-lg border border-amber-200 mb-4">
+                        📜 {res.ref}
                       </span>
-                      <p className="text-3xl font-hebrew text-stone-900 leading-relaxed text-right mb-6" dir="rtl">
+                      <p className="text-2xl md:text-3xl font-hebrew text-stone-900 leading-relaxed text-right mb-4" dir="rtl">
                         {res.he}
                       </p>
-                      <p className="text-lg text-stone-600 leading-relaxed italic">
+                      <p className="text-base text-stone-500 leading-relaxed italic">
                         &quot;{res.en}&quot;
                       </p>
                     </div>
                     <button 
                       onClick={() => handleGenerateStory(res)}
-                      className="w-full md:w-auto px-8 py-6 bg-stone-900 text-white font-bold rounded-2xl hover:bg-amber-600 transition-colors flex items-center justify-center gap-3 self-center shadow-xl shadow-stone-900/10 active:scale-95"
+                      className="btn-create-story w-full md:w-auto self-center"
                     >
-                      <Sparkles size={20} />
-                      {locale === 'es' ? 'Crear Cuento Ilustrado' : 'Create Illustrated Story'}
+                      <Sparkles size={18} />
+                      {locale === 'es' ? '¡Crear Cuento Ilustrado!' : 'Create Illustrated Story!'}
                     </button>
                   </div>
                 </motion.div>
@@ -619,14 +641,15 @@ export default function IndexPage() {
       </main>
 
       {/* Footer */}
-      <footer className="h-24 bg-stone-100 border-t border-stone-200 flex items-center justify-center gap-12 px-6 overflow-hidden">
-        <div className="flex items-center gap-3 text-stone-400 grayscale opacity-50">
-          <BookOpen size={24} />
-          <span className="font-bold uppercase tracking-widest text-xs">Fidelidad Bíblica</span>
+      <footer className="py-6 bg-amber-50/50 border-t border-amber-100 flex items-center justify-center gap-8 px-6">
+        <div className="flex items-center gap-2 text-amber-600/50">
+          <span className="text-lg">📖</span>
+          <span className="font-black uppercase tracking-widest text-[0.65rem]">{locale === 'es' ? 'Fidelidad Bíblica' : 'Biblical Fidelity'}</span>
         </div>
-        <div className="flex items-center gap-3 text-stone-400 grayscale opacity-50">
-          <Users size={24} />
-          <span className="font-bold uppercase tracking-widest text-xs">Aventuras con Efraín</span>
+        <div className="w-1 h-1 rounded-full bg-amber-300" />
+        <div className="flex items-center gap-2 text-amber-600/50">
+          <span className="text-lg">🌾</span>
+          <span className="font-black uppercase tracking-widest text-[0.65rem]">{locale === 'es' ? 'Aventuras con Efraín' : 'Adventures with Efraín'}</span>
         </div>
       </footer>
     </div>
