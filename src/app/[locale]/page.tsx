@@ -339,11 +339,11 @@ export default function IndexPage() {
             </div>
           </motion.div>
 
-          <h1 className="text-4xl md:text-6xl font-black text-stone-900 mb-3 tracking-tight">
+          <h1 className="text-4xl md:text-6xl font-black text-stone-900 mb-1 tracking-tight">
             {t('title')}
           </h1>
-          <p className="text-lg md:text-xl text-stone-500 mb-8 max-w-xl mx-auto font-medium">
-            {t('subtitle')} ✨
+          <p className="text-base md:text-lg text-amber-700 mb-8 font-bold tracking-widest uppercase">
+            📖 {t('subtitle')}
           </p>
 
           {/* Adventure Search Bar */}
