@@ -117,11 +117,24 @@ export default function IndexPage() {
 
   const handleGenerateStory = async (res: any) => {
     setIsGenerating(true);
-    setGenerationStep(locale === 'es' ? '✍️ Escribiendo la historia...' : '✍️ Writing the story...');
-    setGenerationProgress(10);
+    setGenerationProgress(5);
     
     try {
-      // Step 1: Generate the story text
+      // ═══ PHASE 1+2: The Narrator writes + The Art Director storyboards ═══
+      // (Both happen in a single API call to /api/generate)
+      setGenerationStep(locale === 'es' 
+        ? '✍️ El Narrador está escribiendo la historia...' 
+        : '✍️ The Narrator is writing the story...');
+      setGenerationProgress(8);
+
+      // Simulate phase transition for UX feedback
+      const progressTimer = setTimeout(() => {
+        setGenerationStep(locale === 'es' 
+          ? '🎬 El Director de Arte prepara las escenas...' 
+          : '🎬 The Art Director is preparing scenes...');
+        setGenerationProgress(15);
+      }, 6000);
+
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -134,6 +147,8 @@ export default function IndexPage() {
           language: locale
         })
       });
+      
+      clearTimeout(progressTimer);
       const data = await response.json();
       
       if (!data.pages || data.pages.length === 0) {
@@ -155,7 +170,12 @@ export default function IndexPage() {
         return;
       }
 
-      // Initialize story with pages but no images yet
+      // Story text ready — show it immediately so user can start reading
+      setGenerationStep(locale === 'es' 
+        ? '📖 ¡Historia lista! Preparando ilustraciones...' 
+        : '📖 Story ready! Preparing illustrations...');
+      setGenerationProgress(25);
+
       const initialStory: IllustratedStory = {
         title: data.title,
         pages: data.pages.map((p: StoryPage) => ({ ...p, image: null })),
@@ -163,16 +183,19 @@ export default function IndexPage() {
         verses: data.verses
       };
       setStory(initialStory);
-      setGenerationProgress(25);
 
-      // Step 2: Generate images sequentially
+      // Scroll to story so user can start reading while images generate
+      setTimeout(() => {
+        document.getElementById('story-view')?.scrollIntoView({ behavior: 'smooth' });
+      }, 300);
+
+      // ═══ PHASE 3: The Illustrator paints each page ═══
       const totalPages = data.pages.length;
       for (let i = 0; i < totalPages; i++) {
         const page = data.pages[i];
-        const stepLabel = locale === 'es' 
+        setGenerationStep(locale === 'es' 
           ? `🎨 Ilustrando página ${i + 1} de ${totalPages}...`
-          : `🎨 Illustrating page ${i + 1} of ${totalPages}...`;
-        setGenerationStep(stepLabel);
+          : `🎨 Illustrating page ${i + 1} of ${totalPages}...`);
         setGenerationProgress(25 + ((i + 1) / totalPages) * 70);
 
         const imageBase64 = await generateImageForPage(page.imagePrompt, page.pageNumber);
@@ -187,21 +210,19 @@ export default function IndexPage() {
       }
 
       setGenerationProgress(100);
-      setGenerationStep(locale === 'es' ? '✅ ¡Cuento listo!' : '✅ Story ready!');
-      
-      // Scroll to story
-      setTimeout(() => {
-        document.getElementById('story-view')?.scrollIntoView({ behavior: 'smooth' });
-      }, 300);
+      setGenerationStep(locale === 'es' ? '✅ ¡Cuento ilustrado completo!' : '✅ Illustrated story complete!');
 
     } catch (error) {
       console.error('Story generation failed:', error);
+      setGenerationStep(locale === 'es' 
+        ? '❌ Error generando el cuento. Intenta de nuevo.' 
+        : '❌ Error generating story. Try again.');
     } finally {
       setTimeout(() => {
         setIsGenerating(false);
         setGenerationStep('');
         setGenerationProgress(0);
-      }, 1000);
+      }, 2000);
     }
   };
 
