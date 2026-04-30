@@ -76,7 +76,7 @@ export async function POST(req: Request) {
         'X-Title': 'Efrain Story Illustrations',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-preview-04-17',
+        model: 'google/gemini-2.5-flash-image',
         messages: [{
           role: 'user',
           content: messageContent,

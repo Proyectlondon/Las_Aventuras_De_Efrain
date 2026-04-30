@@ -6,17 +6,16 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, Sparkles } from 'lucide-react';
 
-const characters = [
   // MAIN
-  { id: 'efrain', category: 'main', image: '/modelsheets/efrain/EFRAIN.png', color: 'bg-[#C8953D]/20 border-[#C8953D]' },
-  { id: 'jesus', category: 'main', image: '/modelsheets/jesus/JESUS_011.png', color: 'bg-[#F5E6C8]/40 border-[#F5E6C8]' },
-  { id: 'samuel', category: 'main', image: '/modelsheets/samuel/SAMUEL_013.png', color: 'bg-[#7D8B69]/20 border-[#7D8B69]' },
-  { id: 'susana', category: 'main', image: '/modelsheets/susana/SUSANA_007.png', color: 'bg-[#C17B5B]/20 border-[#C17B5B]' },
+  { id: 'efrain', category: 'main', image: '/characters/portraits/efrain.png', color: 'bg-[#C8953D]/20 border-[#C8953D]' },
+  { id: 'jesus', category: 'main', image: '/characters/portraits/jesus.png', color: 'bg-[#F5E6C8]/40 border-[#F5E6C8]' },
+  { id: 'samuel', category: 'main', image: '/characters/portraits/samuel.png', color: 'bg-[#7D8B69]/20 border-[#7D8B69]' },
+  { id: 'susana', category: 'main', image: '/characters/portraits/susana.png', color: 'bg-[#C17B5B]/20 border-[#C17B5B]' },
   { id: 'najar', category: 'main', image: '/modelsheets/najar/NAJAR_002.png', color: 'bg-[#D4A574]/30 border-[#D4A574]' },
   { id: 'mama', category: 'main', image: '/modelsheets/mama/MAMA_004.png', color: 'bg-[#E8A87C]/30 border-[#E8A87C]' },
   { id: 'papa', category: 'main', image: '/modelsheets/papa/PAPA_003.png', color: 'bg-[#8B7355]/20 border-[#8B7355]' },
-  { id: 'abuela', category: 'main', image: '/modelsheets/abuela/ABUELA_017.png', color: 'bg-[#9B8579]/20 border-[#9B8579]' },
-  { id: 'abuelo', category: 'main', image: '/modelsheets/abuelo/ABUELO_010.png', color: 'bg-[#A89080]/20 border-[#A89080]' },
+  { id: 'abuela', category: 'main', image: '/characters/portraits/abuela.png', color: 'bg-[#9B8579]/20 border-[#9B8579]' },
+  { id: 'abuelo', category: 'main', image: '/characters/portraits/abuelo.png', color: 'bg-[#A89080]/20 border-[#A89080]' },
   // ANIMALS
   { id: 'oveja', category: 'animal', image: '/modelsheets/oveja/OVEJA_003.png', color: 'bg-[#F5E6C8]/40 border-[#F5E6C8]' },
   { id: 'toro', category: 'animal', image: '/modelsheets/toro/TORO_000.png', color: 'bg-[#C17B5B]/20 border-[#C17B5B]' },
