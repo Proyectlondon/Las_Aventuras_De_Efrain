@@ -5,8 +5,16 @@ import { useTranslations, useLocale } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronLeft, Book, Trash2, Calendar, Sparkles, Heart } from 'lucide-react';
+import { ChevronLeft, Book, Trash2, Calendar, Sparkles, Heart, BookOpen, Palette, X, Bookmark } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+
+interface StoryPage {
+  pageNumber: number;
+  text: string;
+  sceneDescription: string;
+  theme: string;
+  image?: string | null;
+}
 
 export default function LibraryPage() {
   const t = useTranslations('Common');
@@ -43,6 +51,16 @@ export default function LibraryPage() {
     }
   };
 
+  const hasIllustrations = (story: any) => {
+    return story.pages && Array.isArray(story.pages) && story.pages.length > 0;
+  };
+
+  const getFirstImage = (story: any): string | null => {
+    if (!hasIllustrations(story)) return null;
+    const firstPageWithImage = story.pages.find((p: StoryPage) => p.image);
+    return firstPageWithImage?.image || null;
+  };
+
   return (
     <div className="min-h-screen bg-[#FDFCF7] p-6 md:p-12">
       <div className="max-w-4xl mx-auto">
@@ -53,10 +71,9 @@ export default function LibraryPage() {
           <div className="p-2 bg-white rounded-full shadow-sm group-hover:shadow-md transition-all">
             <ChevronLeft size={24} />
           </div>
-          Volver a la exploración
+          {locale === 'es' ? 'Volver a la exploración' : 'Back to exploration'}
         </Link>
 
-        {/* ... (rest of the header remains same until the list) */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -64,10 +81,12 @@ export default function LibraryPage() {
         >
           <div>
             <h1 className="text-5xl md:text-6xl font-black text-stone-900 mb-4 tracking-tight">
-              Tu Biblioteca
+              {locale === 'es' ? 'Tu Biblioteca' : 'Your Library'}
             </h1>
             <p className="text-xl text-stone-600 font-medium">
-              Aquí se guardan todos los tesoros y aventuras que has descubierto con Efraín.
+              {locale === 'es' 
+                ? 'Aquí se guardan todos los tesoros y aventuras que has descubierto con Efraín.'
+                : 'Here are all the treasures and adventures you have discovered with Efraín.'}
             </p>
           </div>
           <div className="hidden md:block">
@@ -89,8 +108,14 @@ export default function LibraryPage() {
                 <div className="w-20 h-20 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-6 text-stone-400">
                   <Book size={40} />
                 </div>
-                <h2 className="text-2xl font-bold text-stone-800 mb-2">Tu biblioteca está vacía</h2>
-                <p className="text-stone-500 text-lg">¡Busca una palabra en la concordancia para empezar tu primera aventura!</p>
+                <h2 className="text-2xl font-bold text-stone-800 mb-2">
+                  {locale === 'es' ? 'Tu biblioteca está vacía' : 'Your library is empty'}
+                </h2>
+                <p className="text-stone-500 text-lg">
+                  {locale === 'es' 
+                    ? '¡Busca una palabra en la concordancia para empezar tu primera aventura!'
+                    : 'Search for a word in the concordance to start your first adventure!'}
+                </p>
               </motion.div>
             ) : (
               savedStories.map((story) => (
@@ -99,45 +124,68 @@ export default function LibraryPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className="bg-white rounded-[3rem] shadow-xl shadow-stone-200/50 border border-stone-100 overflow-hidden group hover:border-amber-200 transition-all cursor-pointer"
+                  className="bg-white rounded-3xl shadow-xl shadow-stone-200/50 border border-stone-100 overflow-hidden group hover:border-amber-200 transition-all cursor-pointer"
                   onClick={() => setSelectedStory(story)}
                 >
-                  <div className="p-8 md:p-10">
-                    <div className="flex justify-between items-start mb-6">
-                      <div className="flex items-center gap-3 text-amber-600 font-bold text-xs uppercase tracking-widest">
-                        <Calendar size={16} />
-                        <span>{new Date(story.created_at).toLocaleDateString()}</span>
+                  <div className="flex flex-col md:flex-row">
+                    {/* Thumbnail from first illustration */}
+                    {getFirstImage(story) && (
+                      <div className="md:w-48 h-40 md:h-auto flex-shrink-0 overflow-hidden">
+                        <img 
+                          src={getFirstImage(story)!}
+                          alt={story.title}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteStory(story.id);
-                        }}
-                        className="p-3 text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
-                      >
-                        <Trash2 size={20} />
-                      </button>
-                    </div>
+                    )}
                     
-                    <h2 className="text-3xl font-black text-stone-900 mb-4 group-hover:text-amber-700 transition-colors leading-tight">
-                      {story.title}
-                    </h2>
-                    
-                    <p className="text-xl text-stone-600 leading-relaxed line-clamp-2 mb-8">
-                      {story.content}
-                    </p>
+                    <div className="p-8 md:p-10 flex-1">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2 text-amber-600 font-bold text-xs uppercase tracking-widest">
+                            <Calendar size={14} />
+                            <span>{new Date(story.created_at).toLocaleDateString()}</span>
+                          </div>
+                          {hasIllustrations(story) && (
+                            <span className="flex items-center gap-1 px-2 py-1 bg-amber-50 text-amber-700 rounded-lg text-xs font-bold border border-amber-100">
+                              <Palette size={12} />
+                              {story.pages.length} {locale === 'es' ? 'págs' : 'pgs'}
+                            </span>
+                          )}
+                        </div>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteStory(story.id);
+                          }}
+                          className="p-3 text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                      
+                      <h2 className="text-2xl font-black text-stone-900 mb-3 group-hover:text-amber-700 transition-colors leading-tight">
+                        {story.title}
+                      </h2>
+                      
+                      <p className="text-stone-600 leading-relaxed line-clamp-2 mb-6">
+                        {hasIllustrations(story) 
+                          ? story.pages[0]?.text 
+                          : story.content}
+                      </p>
 
-                    <div className="flex flex-wrap gap-3 items-center">
-                      {story.verses?.map((v: string, i: number) => (
-                        <span key={i} className="px-4 py-2 bg-sky-50 text-sky-700 rounded-xl font-bold text-xs border border-sky-100 shadow-sm">
-                          {v}
+                      <div className="flex flex-wrap gap-3 items-center">
+                        {story.verses?.slice(0, 2).map((v: string, i: number) => (
+                          <span key={i} className="px-3 py-1.5 bg-sky-50 text-sky-700 rounded-lg font-bold text-xs border border-sky-100">
+                            {v}
+                          </span>
+                        ))}
+                        <div className="flex-1"></div>
+                        <span className="flex items-center gap-2 text-amber-700 font-black uppercase text-xs tracking-wide group-hover:gap-3 transition-all">
+                          {locale === 'es' ? 'Leer aventura' : 'Read adventure'}
+                          <ChevronLeft className="rotate-180" size={16} />
                         </span>
-                      ))}
-                      <div className="flex-1"></div>
-                      <span className="flex items-center gap-2 text-amber-700 font-black uppercase text-sm tracking-wide group-hover:gap-3 transition-all">
-                        Leer aventura completa
-                        <ChevronLeft className="rotate-180" size={20} />
-                      </span>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -147,7 +195,7 @@ export default function LibraryPage() {
         </div>
       </div>
 
-      {/* Story Reader Modal */}
+      {/* ─── STORY READER MODAL ─── */}
       <AnimatePresence>
         {selectedStory && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8">
@@ -162,49 +210,109 @@ export default function LibraryPage() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-[3rem] shadow-2xl overflow-y-auto"
+              className="relative w-full max-w-4xl max-h-[90vh] bg-[#FDFCF7] rounded-3xl shadow-2xl overflow-y-auto"
             >
-              <div className="sticky top-0 right-0 p-6 flex justify-end z-10">
+              {/* Close button */}
+              <div className="sticky top-0 right-0 p-4 flex justify-end z-10">
                 <button 
                   onClick={() => setSelectedStory(null)}
                   className="p-3 bg-white/80 backdrop-blur rounded-full shadow-lg text-stone-500 hover:text-stone-900 transition-all"
                 >
-                  <ChevronLeft className="rotate-90" size={24} />
+                  <X size={20} />
                 </button>
               </div>
 
-              <div className="p-8 md:p-16 pt-0">
-                <div className="flex flex-col md:flex-row gap-8 items-center mb-12">
-                   <div className="w-32 h-32 md:w-40 md:h-40 relative flex-shrink-0">
-                    <div className="absolute inset-0 bg-white rounded-full shadow-lg border-4 border-amber-200"></div>
-                    <div className="relative w-full h-full rounded-full overflow-hidden">
-                      <Image src="/characters/efrain_final.png" alt="Efraín" fill className="object-cover" />
-                    </div>
-                  </div>
-                  <div className="text-center md:text-left">
-                    <h2 className="text-4xl md:text-5xl font-black text-stone-900 mb-2 leading-tight">{selectedStory.title}</h2>
-                    <p className="text-amber-700 font-bold tracking-widest uppercase text-sm">Tesoro Guardado</p>
+              <div className="px-6 md:px-12 pb-12 -mt-4">
+                {/* Title */}
+                <div className="text-center mb-10">
+                  <h2 className="storybook-title text-3xl md:text-5xl mb-2">
+                    {selectedStory.title}
+                  </h2>
+                  <div className="flex items-center justify-center gap-2 text-amber-700 font-bold tracking-widest uppercase text-xs">
+                    <BookOpen size={14} />
+                    <span>{locale === 'es' ? 'Tesoro Guardado' : 'Saved Treasure'}</span>
                   </div>
                 </div>
 
-                <div className="prose prose-stone max-w-none">
-                  <p className="text-2xl text-stone-700 leading-relaxed first-letter:text-6xl first-letter:font-black first-letter:text-amber-600 first-letter:mr-4 first-letter:float-left whitespace-pre-wrap">
-                    {selectedStory.content}
-                  </p>
-                  
-                  <div className="mt-16 p-8 bg-amber-50/50 rounded-[2.5rem] border border-amber-100 flex items-start gap-6 shadow-inner">
-                    <div className="p-4 bg-white rounded-2xl text-amber-600 shadow-sm">
-                      <Heart size={32} fill="currentColor" />
+                {/* Illustrated Pages */}
+                {hasIllustrations(selectedStory) ? (
+                  <div className="space-y-5">
+                    {selectedStory.pages.map((page: StoryPage, index: number) => (
+                      <motion.div
+                        key={page.pageNumber}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.08 }}
+                        className="storybook-page"
+                      >
+                        <div className="flex flex-col md:flex-row">
+                          {/* Illustration */}
+                          {page.image && (
+                            <div className="md:w-[45%] p-4 md:p-5 flex-shrink-0">
+                              <div className="storybook-illustration">
+                                <img 
+                                  src={page.image}
+                                  alt={page.sceneDescription || `Página ${page.pageNumber}`}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Text */}
+                          <div className={`${page.image ? 'md:w-[55%]' : 'w-full'} p-5 md:p-6 ${page.image ? 'md:pl-2' : ''} flex flex-col justify-between`}>
+                            <p className="storybook-text mb-4">{page.text}</p>
+                            
+                            <div className="mt-3 pt-3 border-t border-stone-100">
+                              <div className="flex items-end justify-between gap-4">
+                                <div className="flex-1 min-w-0">
+                                  {page.sceneDescription && (
+                                    <p className="storybook-scene truncate">
+                                      {page.sceneDescription}
+                                      {page.theme && (
+                                        <span className="storybook-theme-badge ml-1">: {page.theme}</span>
+                                      )}
+                                    </p>
+                                  )}
+                                </div>
+                                <span className="storybook-page-number flex-shrink-0">
+                                  {locale === 'es' ? 'Página' : 'Page'} {page.pageNumber}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  /* Legacy text-only story */
+                  <div className="bg-white rounded-2xl border border-stone-200 p-8 md:p-12">
+                    <p className="text-lg text-stone-700 leading-relaxed first-letter:text-5xl first-letter:font-black first-letter:text-amber-600 first-letter:mr-3 first-letter:float-left whitespace-pre-wrap">
+                      {selectedStory.content}
+                    </p>
+                  </div>
+                )}
+
+                {/* Lesson */}
+                <div className="mt-8 bg-white rounded-2xl border border-stone-200 p-6 md:p-8">
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="p-3 bg-amber-50 rounded-xl text-amber-600 flex-shrink-0">
+                      <Heart size={24} fill="currentColor" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-stone-800 mb-2 uppercase tracking-wide">Lección para el corazón</h3>
-                      <p className="text-xl text-stone-600 leading-relaxed italic">"{selectedStory.lesson}"</p>
+                      <h3 className="text-base font-bold text-stone-800 mb-1 uppercase tracking-wide">
+                        {locale === 'es' ? 'Lección para el corazón' : 'Lesson for the heart'}
+                      </h3>
+                      <p className="text-lg text-stone-600 leading-relaxed italic">
+                        &quot;{selectedStory.lesson}&quot;
+                      </p>
                     </div>
                   </div>
 
-                  <div className="mt-12 flex flex-wrap gap-4 pt-8 border-t border-stone-100">
+                  <div className="flex flex-wrap gap-3 pt-4 border-t border-stone-100">
                     {selectedStory.verses?.map((v: string, i: number) => (
-                      <span key={i} className="px-5 py-2 bg-sky-100 text-sky-800 rounded-xl font-bold text-sm">
+                      <span key={i} className="px-4 py-2 bg-sky-50 text-sky-700 rounded-lg font-bold text-sm border border-sky-100">
                         {v}
                       </span>
                     ))}

@@ -1,13 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { Search, BookOpen, Users, Bookmark, Languages, Sparkles, Loader2, X, Heart, BookHeart, LogOut, MapPin } from 'lucide-react';
+import { Search, BookOpen, Users, Bookmark, Languages, Sparkles, Loader2, X, Heart, BookHeart, LogOut, MapPin, Palette, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+
+interface StoryPage {
+  pageNumber: number;
+  text: string;
+  sceneDescription: string;
+  theme: string;
+  imagePrompt: string;
+  image?: string | null;
+}
+
+interface IllustratedStory {
+  title: string;
+  pages: StoryPage[];
+  lesson: string;
+  verses: string[];
+}
 
 export default function IndexPage() {
   const t = useTranslations('Index');
@@ -41,7 +57,9 @@ export default function IndexPage() {
   };
   
   const [isGenerating, setIsGenerating] = useState(false);
-  const [story, setStory] = useState<any>(null);
+  const [generationStep, setGenerationStep] = useState('');
+  const [generationProgress, setGenerationProgress] = useState(0);
+  const [story, setStory] = useState<IllustratedStory | null>(null);
 
   const [analysis, setAnalysis] = useState<any>(null);
 
@@ -57,7 +75,7 @@ export default function IndexPage() {
 
       // If we found results, let's analyze the word too
       if (data.results?.length > 0) {
-        const analyzeRes = await fetch('/api/generate-story', {
+        const analyzeRes = await fetch('/api/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -79,10 +97,32 @@ export default function IndexPage() {
     }
   };
 
+  const generateImageForPage = useCallback(async (imagePrompt: string, pageNumber: number): Promise<string | null> => {
+    try {
+      const response = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imagePrompt, pageNumber })
+      });
+      const data = await response.json();
+      if (data.success && data.image) {
+        return data.image;
+      }
+      return null;
+    } catch (error) {
+      console.error(`Failed to generate image for page ${pageNumber}:`, error);
+      return null;
+    }
+  }, []);
+
   const handleGenerateStory = async (res: any) => {
     setIsGenerating(true);
+    setGenerationStep(locale === 'es' ? '✍️ Escribiendo la historia...' : '✍️ Writing the story...');
+    setGenerationProgress(10);
+    
     try {
-      const response = await fetch('/api/generate-story', {
+      // Step 1: Generate the story text
+      const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -95,15 +135,73 @@ export default function IndexPage() {
         })
       });
       const data = await response.json();
-      setStory(data);
+      
+      if (!data.pages || data.pages.length === 0) {
+        // Fallback: old format story
+        setStory({
+          title: data.title || 'Aventura',
+          pages: [{
+            pageNumber: 1,
+            text: data.story || 'No se pudo generar el cuento.',
+            sceneDescription: '',
+            theme: '',
+            imagePrompt: '',
+            image: null
+          }],
+          lesson: data.lesson || '',
+          verses: data.verses || []
+        });
+        setIsGenerating(false);
+        return;
+      }
+
+      // Initialize story with pages but no images yet
+      const initialStory: IllustratedStory = {
+        title: data.title,
+        pages: data.pages.map((p: StoryPage) => ({ ...p, image: null })),
+        lesson: data.lesson,
+        verses: data.verses
+      };
+      setStory(initialStory);
+      setGenerationProgress(25);
+
+      // Step 2: Generate images sequentially
+      const totalPages = data.pages.length;
+      for (let i = 0; i < totalPages; i++) {
+        const page = data.pages[i];
+        const stepLabel = locale === 'es' 
+          ? `🎨 Ilustrando página ${i + 1} de ${totalPages}...`
+          : `🎨 Illustrating page ${i + 1} of ${totalPages}...`;
+        setGenerationStep(stepLabel);
+        setGenerationProgress(25 + ((i + 1) / totalPages) * 70);
+
+        const imageBase64 = await generateImageForPage(page.imagePrompt, page.pageNumber);
+        
+        // Update the story with the new image progressively
+        setStory(prev => {
+          if (!prev) return prev;
+          const updatedPages = [...prev.pages];
+          updatedPages[i] = { ...updatedPages[i], image: imageBase64 };
+          return { ...prev, pages: updatedPages };
+        });
+      }
+
+      setGenerationProgress(100);
+      setGenerationStep(locale === 'es' ? '✅ ¡Cuento listo!' : '✅ Story ready!');
+      
       // Scroll to story
       setTimeout(() => {
         document.getElementById('story-view')?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+      }, 300);
+
     } catch (error) {
       console.error('Story generation failed:', error);
     } finally {
-      setIsGenerating(false);
+      setTimeout(() => {
+        setIsGenerating(false);
+        setGenerationStep('');
+        setGenerationProgress(0);
+      }, 1000);
     }
   };
 
@@ -112,13 +210,20 @@ export default function IndexPage() {
     
     const { error } = await supabase.from('stories').insert([{
       title: story.title,
-      content: story.story,
+      content: story.pages.map(p => p.text).join('\n\n'),
       word: query,
       reference: story.verses?.[0] || '',
       lesson: story.lesson,
       verses: story.verses,
       age_group: selectedAge,
-      language: locale
+      language: locale,
+      pages: story.pages.map(p => ({
+        pageNumber: p.pageNumber,
+        text: p.text,
+        sceneDescription: p.sceneDescription,
+        theme: p.theme,
+        image: p.image
+      }))
     }]);
 
     if (error) {
@@ -223,13 +328,12 @@ export default function IndexPage() {
              {Object.keys(c.raw('ageGroups')).map((key) => {
                // Map keys to specific colors based on beta app styles
                let bgActive = 'bg-[#C8953D] text-white';
-               let bgInactive = 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50';
                
-               if (key === 'preschool') {
+               if (key === 'toddler') {
                  bgActive = 'bg-gradient-to-r from-amber-300 to-orange-300 text-amber-900 border-amber-300';
-               } else if (key === 'children') {
+               } else if (key === 'preschool') {
                  bgActive = 'bg-gradient-to-r from-[#7D8B69] to-green-400 text-white border-[#7D8B69]';
-               } else if (key === 'teens') {
+               } else if (key === 'middle') {
                  bgActive = 'bg-gradient-to-r from-[#C17B5B] to-rose-400 text-white border-[#C17B5B]';
                }
 
@@ -240,7 +344,7 @@ export default function IndexPage() {
                    className={`px-6 py-3 rounded-2xl transition-all border-2 font-bold flex items-center gap-2 ${
                      selectedAge === key 
                      ? `${bgActive} shadow-md scale-105` 
-                     : bgInactive
+                     : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
                    }`}
                  >
                    {c(`ageGroups.${key}`)}
@@ -280,82 +384,168 @@ export default function IndexPage() {
             </motion.div>
           )}
 
+          {/* ─── GENERATION PROGRESS ─── */}
           {isGenerating && (
             <motion.div 
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }} 
-              className="flex flex-col items-center justify-center py-20 gap-6"
+              className="flex flex-col items-center justify-center py-16 gap-6"
             >
-              <div className="relative w-32 h-32 rounded-full bg-amber-100 border-4 border-white shadow-xl overflow-hidden">
-                 <Image src="/characters/efrain_final.png" alt="Efraín" fill className="object-cover animate-pulse" />
+              <div className="relative w-36 h-36 rounded-full bg-amber-100 border-4 border-white shadow-xl overflow-hidden">
+                 <Image src="/characters/efrain_final.png" alt="Efraín" fill className="object-cover" />
+                 <div className="absolute inset-0 bg-gradient-to-t from-amber-900/20 to-transparent" />
+                 <div className="absolute bottom-2 right-2 bg-white rounded-full p-1.5 shadow-lg">
+                   <Palette size={18} className="text-amber-600 animate-pulse" />
+                 </div>
               </div>
-              <p className="text-xl font-bold text-stone-800 animate-pulse">{c('loading')}</p>
+              <p className="text-xl font-bold text-stone-800">{generationStep}</p>
+              
+              {/* Progress bar */}
+              <div className="w-full max-w-md">
+                <div className="generation-progress">
+                  <div 
+                    className="generation-progress-bar"
+                    style={{ width: `${generationProgress}%` }}
+                  />
+                </div>
+                <p className="text-sm text-stone-500 mt-2 text-center font-semibold">
+                  {Math.round(generationProgress)}%
+                </p>
+              </div>
             </motion.div>
           )}
 
+          {/* ─── ILLUSTRATED STORYBOOK VIEWER ─── */}
           {story && !isGenerating && (
             <motion.div 
               id="story-view"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-white rounded-[3rem] border border-stone-200 shadow-2xl overflow-hidden mb-12 relative"
+              className="mb-12"
             >
-              <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-8 md:p-12 flex flex-col md:flex-row gap-8 items-center border-b border-amber-100 relative">
-                <div className="w-32 h-32 md:w-40 md:h-40 relative flex-shrink-0">
-                  <div className="absolute inset-0 bg-white rounded-full shadow-lg border-4 border-amber-200"></div>
-                  <div className="relative w-full h-full rounded-full overflow-hidden">
-                    <Image src="/characters/efrain_final.png" alt="Efraín" fill className="object-cover" />
-                  </div>
-                  <div className="absolute -bottom-2 -right-2 bg-amber-500 text-white p-2 rounded-full shadow-lg">
-                    <Sparkles size={24} />
-                  </div>
-                </div>
-                <div className="text-center md:text-left flex-1">
-                  <h2 className="text-4xl md:text-5xl font-black text-stone-900 mb-2 leading-tight">{story.title}</h2>
-                  <div className="flex items-center justify-center md:justify-start gap-2 text-amber-700 font-bold tracking-widest uppercase text-sm">
-                    <BookOpen size={18} />
-                    <span>Aventura de Efraín</span>
-                  </div>
-                </div>
+              {/* Story Title */}
+              <div className="text-center mb-10 relative">
                 <button 
                   onClick={() => setStory(null)} 
-                  className="absolute top-8 right-8 p-2 hover:bg-black/5 rounded-full transition-colors"
+                  className="absolute top-0 right-0 p-2 hover:bg-black/5 rounded-full transition-colors"
                 >
-                  <X className="text-stone-400" />
+                  <X className="text-stone-400" size={24} />
                 </button>
-              </div>
-              <div className="p-8 md:p-16 prose prose-stone max-w-none">
-                <p className="text-2xl text-stone-700 leading-relaxed first-letter:text-6xl first-letter:font-black first-letter:text-amber-600 first-letter:mr-4 first-letter:float-left whitespace-pre-wrap">
-                  {story.story}
-                </p>
-                
-                <div className="mt-16 p-8 bg-amber-50/50 rounded-[2.5rem] border border-amber-100 flex items-start gap-6 shadow-inner">
-                  <div className="p-4 bg-white rounded-2xl text-amber-600 shadow-sm">
-                    <Heart size={32} fill="currentColor" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-stone-800 mb-2 uppercase tracking-wide">Lección para el corazón</h3>
-                    <p className="text-xl text-stone-600 leading-relaxed italic">"{story.lesson}"</p>
-                  </div>
+                <h2 className="storybook-title text-4xl md:text-6xl mb-3">
+                  {story.title}
+                </h2>
+                <div className="flex items-center justify-center gap-2 text-amber-700 font-bold tracking-widest uppercase text-xs">
+                  <BookOpen size={14} />
+                  <span>Aventura Ilustrada de Efraín</span>
                 </div>
+              </div>
 
-                <div className="mt-16 flex flex-col sm:flex-row justify-between items-center gap-8 border-t border-stone-100 pt-12">
-                  <div className="flex flex-wrap justify-center gap-4">
-                    {story.verses?.map((v: string, i: number) => (
-                      <span key={i} className="px-5 py-2 bg-sky-100 text-sky-800 rounded-xl font-bold text-sm shadow-sm">
-                        {v}
-                      </span>
-                    ))}
-                  </div>
-                  <button 
-                    onClick={handleSaveStory}
-                    className="w-full sm:w-auto flex items-center justify-center gap-3 px-10 py-5 bg-amber-600 text-white font-black rounded-2xl hover:bg-amber-700 transition-all shadow-xl shadow-amber-600/30 hover:-translate-y-1 active:translate-y-0"
+              {/* Pages */}
+              <div className="space-y-6">
+                {story.pages.map((page, index) => (
+                  <motion.div
+                    key={page.pageNumber}
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="storybook-page"
                   >
-                    <Bookmark size={24} />
-                    {c('save')}
-                  </button>
-                </div>
+                    <div className="flex flex-col md:flex-row">
+                      {/* Illustration */}
+                      <div className="md:w-[45%] p-4 md:p-5 flex-shrink-0">
+                        {page.image ? (
+                          <div className="storybook-illustration">
+                            <img 
+                              src={page.image} 
+                              alt={page.sceneDescription || `Página ${page.pageNumber}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="storybook-illustration-loading flex items-center justify-center">
+                            <div className="text-center">
+                              <Palette size={32} className="text-stone-400 mx-auto mb-2 animate-pulse" />
+                              <p className="text-xs text-stone-400 font-semibold">
+                                {locale === 'es' ? 'Ilustrando...' : 'Illustrating...'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Text Content */}
+                      <div className="md:w-[55%] p-5 md:p-6 md:pl-2 flex flex-col justify-between">
+                        <div>
+                          <p className="storybook-text mb-4">
+                            {page.text}
+                          </p>
+                        </div>
+                        
+                        <div className="mt-4 pt-3 border-t border-stone-100">
+                          <div className="flex items-end justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              {page.sceneDescription && (
+                                <p className="storybook-scene truncate">
+                                  {page.sceneDescription}
+                                  {page.theme && (
+                                    <span className="storybook-theme-badge ml-1">: {page.theme}</span>
+                                  )}
+                                </p>
+                              )}
+                            </div>
+                            <span className="storybook-page-number flex-shrink-0">
+                              {locale === 'es' ? 'Página' : 'Page'} {page.pageNumber}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
+
+              {/* Lesson & Footer */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                className="mt-8 bg-white rounded-3xl border border-stone-200 shadow-lg overflow-hidden"
+              >
+                <div className="p-8 md:p-10">
+                  {/* Lesson */}
+                  <div className="flex items-start gap-5 mb-8">
+                    <div className="p-3 bg-amber-50 rounded-2xl text-amber-600 flex-shrink-0">
+                      <Heart size={28} fill="currentColor" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-stone-800 mb-1 uppercase tracking-wide">
+                        {locale === 'es' ? 'Lección para el corazón' : 'Lesson for the heart'}
+                      </h3>
+                      <p className="text-lg text-stone-600 leading-relaxed italic">
+                        &quot;{story.lesson}&quot;
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Verses & Save */}
+                  <div className="flex flex-col sm:flex-row justify-between items-center gap-6 pt-6 border-t border-stone-100">
+                    <div className="flex flex-wrap justify-center gap-3">
+                      {story.verses?.map((v: string, i: number) => (
+                        <span key={i} className="px-4 py-2 bg-sky-50 text-sky-700 rounded-xl font-bold text-sm border border-sky-100 shadow-sm">
+                          {v}
+                        </span>
+                      ))}
+                    </div>
+                    <button 
+                      onClick={handleSaveStory}
+                      className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-amber-600 text-white font-black rounded-2xl hover:bg-amber-700 transition-all shadow-xl shadow-amber-600/20 hover:-translate-y-1 active:translate-y-0"
+                    >
+                      <Bookmark size={20} />
+                      {c('save')}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
             </motion.div>
           )}
 
@@ -389,15 +579,15 @@ export default function IndexPage() {
                         {res.he}
                       </p>
                       <p className="text-lg text-stone-600 leading-relaxed italic">
-                        "{res.en}"
+                        &quot;{res.en}&quot;
                       </p>
                     </div>
                     <button 
                       onClick={() => handleGenerateStory(res)}
-                      className="w-full md:w-auto px-8 py-6 bg-stone-900 text-white font-bold rounded-2xl hover:bg-amber-600 transition-colors flex items-center justify-center gap-3 self-center shadow-xl shadow-stone-900/10 active:scale-95 transition-all"
+                      className="w-full md:w-auto px-8 py-6 bg-stone-900 text-white font-bold rounded-2xl hover:bg-amber-600 transition-colors flex items-center justify-center gap-3 self-center shadow-xl shadow-stone-900/10 active:scale-95"
                     >
                       <Sparkles size={20} />
-                      Crear Cuento con Efraín
+                      {locale === 'es' ? 'Crear Cuento Ilustrado' : 'Create Illustrated Story'}
                     </button>
                   </div>
                 </motion.div>
