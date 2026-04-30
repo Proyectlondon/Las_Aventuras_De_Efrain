@@ -1,36 +1,30 @@
 import { NextResponse } from 'next/server';
 
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
 async function callLLM(prompt: string, apiKey: string): Promise<string> {
-  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-      'HTTP-Referer': 'https://efrain-app.vercel.app',
-      'X-Title': 'Efrain Biblical Search',
-    },
-    body: JSON.stringify({
-      model: 'google/gemini-2.0-flash-lite-preview-02-05:free',
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' },
-    }),
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ 
+    model: 'gemini-2.5-flash',
+    generationConfig: {
+      responseMimeType: 'application/json',
+    }
   });
 
-  if (!response.ok) {
-    const err = await response.text();
-    console.error('OpenRouter error in search:', err);
-    throw new Error(`OpenRouter failed: ${response.status}`);
+  try {
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    return text.replace(/```json\n?|```/g, '').trim();
+  } catch (error) {
+    console.error('Gemini API error in search:', error);
+    throw new Error('Gemini API failed');
   }
-
-  const data = await response.json();
-  const content = data.choices[0].message.content;
-  return content.replace(/```json\n?|```/g, '').trim();
 }
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('q');
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  const apiKey = process.env.GOOGLE_AI_API_KEY;
 
   if (!query) {
     return NextResponse.json({ error: 'Missing query' }, { status: 400 });
