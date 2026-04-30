@@ -332,7 +332,7 @@ export default function IndexPage() {
           >
             <div className="relative w-28 h-28 md:w-36 md:h-36 mx-auto">
               <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-200 via-amber-100 to-green-100 animate-pulse" style={{ animationDuration: '4s' }} />
-              <Image src="/characters/efrain_final.png" alt="Efraín" fill className="object-cover rounded-full relative z-10 border-4 border-white shadow-xl" />
+              <Image src="/characters/portraits/efrain.png" alt="Efraín" fill className="object-cover rounded-full relative z-10 border-4 border-white shadow-xl" />
               <div className="absolute -bottom-1 -right-1 z-20 bg-amber-500 rounded-full p-2 shadow-lg border-2 border-white">
                 <Sparkles size={16} className="text-white" />
               </div>
@@ -434,7 +434,7 @@ export default function IndexPage() {
               <div className="generation-mascot">
                 <div className="generation-mascot-ring" />
                 <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full bg-amber-50 border-4 border-white shadow-xl overflow-hidden">
-                  <Image src="/characters/efrain_final.png" alt="Efraín" fill className="object-cover" />
+                  <Image src="/characters/portraits/efrain.png" alt="Efraín" fill className="object-cover" />
                 </div>
               </div>
               <p className="text-xl font-black text-stone-800 mb-1">{generationStep}</p>
