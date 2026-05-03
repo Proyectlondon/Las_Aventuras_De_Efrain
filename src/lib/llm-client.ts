@@ -15,8 +15,10 @@ export class LLMClient {
   private googleAI: GoogleGenerativeAI | null = null;
   private openRouterKey: string;
 
-  constructor(private googleApiKey: string) {
-    this.googleAI = new GoogleGenerativeAI(googleApiKey);
+  constructor(private googleApiKey?: string) {
+    if (googleApiKey) {
+      this.googleAI = new GoogleGenerativeAI(googleApiKey);
+    }
     this.openRouterKey = process.env.OPENROUTER_API_KEY || '';
   }
 
@@ -27,13 +29,17 @@ export class LLMClient {
       return this.callOllama(prompt, options);
     }
 
-    // Try Gemini first, fallback to OpenRouter
-    try {
-      return await this.callGemini(prompt, options);
-    } catch (error) {
-      console.warn('[LLM] Gemini failed, trying OpenRouter:', error instanceof Error ? error.message : String(error));
-      return this.callOpenRouter(prompt, options);
+    // Try Gemini first if available, otherwise use OpenRouter
+    if (this.googleAI) {
+      try {
+        return await this.callGemini(prompt, options);
+      } catch (error) {
+        console.warn('[LLM] Gemini failed, trying OpenRouter:', error instanceof Error ? error.message : String(error));
+      }
     }
+
+    // Use OpenRouter as primary or fallback
+    return this.callOpenRouter(prompt, options);
   }
 
   private async callOllama(prompt: string, options: LLMOptions): Promise<string> {
@@ -141,10 +147,7 @@ let llmClient: LLMClient | null = null;
 export function getLLMClient(): LLMClient {
   if (!llmClient) {
     const googleApiKey = process.env.GOOGLE_AI_API_KEY;
-    if (!googleApiKey) {
-      throw new Error('GOOGLE_AI_API_KEY not configured');
-    }
-    llmClient = new LLMClient(googleApiKey);
+    llmClient = new LLMClient(googleApiKey); // googleApiKey is optional now
   }
   return llmClient;
 }
