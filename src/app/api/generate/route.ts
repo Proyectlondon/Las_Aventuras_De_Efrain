@@ -1,35 +1,85 @@
 import { NextResponse } from 'next/server';
 import {
-  buildNarratorPrompt,
-  buildArtDirectorPrompt,
-  validateManuscript,
-  validateBlueprints,
+  buildSinglePassStoryPrompt,
+  validateSinglePassStory,
 } from '@/lib/narrative-engine';
-
-// ═══════════════════════════════════════════════════════════════
-// TWO-PASS STORY GENERATION PIPELINE
-// Pass 1: The Narrator — writes the story text (7 Gold Rules)
-// Pass 2: The Art Director — creates visual blueprints from manuscript
-// ═══════════════════════════════════════════════════════════════
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-async function callLLM(prompt: string, apiKey: string): Promise<string> {
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ 
-    model: 'gemini-2.5-flash',
-    generationConfig: {
-      responseMimeType: 'application/json',
-    }
-  });
+import http from 'http';
 
+async function callLLM(prompt: string, apiKey: string): Promise<string> {
+  const useLocalAI = process.env.USE_LOCAL_TEXT_AI === 'true';
+  let lastOllamaError = '';
+  if (useLocalAI) {
+    try {
+      const ollamaUrl = process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434/v1';
+      const ollamaModel = process.env.OLLAMA_MODEL || 'llama3.1:8b';
+      
+      console.log(`[Engine] Calling Ollama (http) at ${ollamaUrl}...`);
+      
+      const url = new URL(ollamaUrl);
+      const postData = JSON.stringify({
+        model: ollamaModel,
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: 'json_object' }
+      });
+
+      const localText = await new Promise<string>((resolve, reject) => {
+        const req = http.request({
+          hostname: url.hostname,
+          port: url.port,
+          path: `${url.pathname}/chat/completions`.replace('//', '/'),
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(postData)
+          }
+        }, (res) => {
+          let data = '';
+          res.on('data', (chunk) => { data += chunk; });
+          res.on('end', () => {
+            if (res.statusCode && res.statusCode >= 400) {
+              reject(new Error(`Ollama error ${res.statusCode}`));
+            } else {
+              resolve(data);
+            }
+          });
+        });
+        req.on('error', (e) => reject(e));
+        req.write(postData);
+        req.end();
+      });
+
+      const data = JSON.parse(localText);
+      let text = data.choices[0].message.content;
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) text = jsonMatch[0];
+      return text.replace(/```json\n?|```/g, '').trim();
+    } catch (error: any) {
+      console.warn('[Engine] Ollama http failed:', error.message);
+      lastOllamaError = error.message;
+    }
+  }
+
+  // Fallback to Gemini for production or if local fails
   try {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-1.5-flash',
+      generationConfig: {
+        responseMimeType: 'application/json',
+      }
+    });
+
     const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    let text = result.response.text();
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) text = jsonMatch[0];
     return text.replace(/```json\n?|```/g, '').trim();
-  } catch (error) {
-    console.error('Gemini API error in generate:', error);
-    throw new Error('Gemini API failed');
+  } catch (error: any) {
+    console.error('[Gemini] API error details:', error);
+    throw new Error(`Text generation failed. (Ollama: ${lastOllamaError || 'Disabled'}, Gemini: ${error.message || 'Key Expired'})`);
   }
 }
 
@@ -42,7 +92,7 @@ export async function POST(req: Request) {
       throw new Error('GOOGLE_AI_API_KEY not configured');
     }
 
-    // ─── DICTIONARY MODE (unchanged) ───
+    // ─── DICTIONARY MODE ───
     if (ageGroup === 'dictionary') {
       const prompt = `
         ROL: Eres un narrador experto en teología bíblica y pedagogía infantil.
@@ -85,11 +135,11 @@ export async function POST(req: Request) {
     }
 
     // ═══════════════════════════════════════════════════════
-    // PASS 1: THE NARRATOR — Story text with 7 Gold Rules
+    // SINGLE-PASS: Story and Blueprints together
     // ═══════════════════════════════════════════════════════
-    console.log('[Engine] Pass 1: The Narrator — writing story...');
+    console.log('[Engine] Single Pass: Generating story and blueprints...');
 
-    const narratorPrompt = buildNarratorPrompt({
+    const prompt = buildSinglePassStoryPrompt({
       word,
       reference,
       hebrewText,
@@ -98,63 +148,20 @@ export async function POST(req: Request) {
       language: language || 'es',
     });
 
-    const narratorContent = await callLLM(narratorPrompt, apiKey);
-    const narratorParsed = JSON.parse(narratorContent);
-    const manuscript = validateManuscript(narratorParsed);
+    const content = await callLLM(prompt, apiKey);
+    const parsed = JSON.parse(content);
+    const manuscript = validateSinglePassStory(parsed);
 
     if (!manuscript) {
-      console.error('[Engine] Narrator output failed validation:', narratorContent);
-      throw new Error('Narrator output failed validation');
+      console.error('[Engine] Output failed validation:', content);
+      throw new Error('LLM output failed validation');
     }
 
-    console.log(`[Engine] Manuscript ready: "${manuscript.title}" with ${manuscript.pages.length} pages`);
-
-    // ═══════════════════════════════════════════════════════
-    // PASS 2: THE ART DIRECTOR — Visual blueprints
-    // ═══════════════════════════════════════════════════════
-    console.log('[Engine] Pass 2: The Art Director — creating visual blueprints...');
-
-    const artDirectorPrompt = buildArtDirectorPrompt(manuscript);
-    const artDirectorContent = await callLLM(artDirectorPrompt, apiKey);
-    const artDirectorParsed = JSON.parse(artDirectorContent);
-    const blueprints = validateBlueprints(artDirectorParsed);
-
-    if (!blueprints || blueprints.length === 0) {
-      console.error('[Engine] Art Director output failed validation:', artDirectorContent);
-      // Fallback: use manuscript scene descriptions as basic prompts
-      const fallbackBlueprints = manuscript.pages.map((p) => ({
-        pageNumber: p.pageNumber,
-        fullPrompt: `${p.sceneDescription}. A 9-year-old Latin American boy named Efraín wearing a straw hat, leather vest, cream shirt, blue shorts, and boots. ${p.visualElements.join(', ')}. Warm pastoral anime illustration style.`,
-      }));
-
-      return NextResponse.json({
-        title: manuscript.title,
-        pages: manuscript.pages.map((page, i) => ({
-          ...page,
-          imagePrompt: fallbackBlueprints[i]?.fullPrompt || page.sceneDescription,
-        })),
-        lesson: manuscript.lesson,
-        verses: manuscript.verses,
-      });
-    }
-
-    console.log(`[Engine] Blueprints ready: ${blueprints.length} visual blueprints`);
-
-    // ═══════════════════════════════════════════════════════
-    // COMBINE: Manuscript + Blueprints → Final Story
-    // ═══════════════════════════════════════════════════════
-    const finalPages = manuscript.pages.map((page, i) => ({
-      pageNumber: page.pageNumber,
-      text: page.text,
-      sceneDescription: page.sceneDescription,
-      theme: page.theme,
-      emotion: page.emotion,
-      imagePrompt: blueprints[i]?.fullPrompt || page.sceneDescription,
-    }));
+    console.log(`[Engine] Manuscript ready: "${manuscript.title}" with ${manuscript.pages.length} pages and visual blueprints.`);
 
     return NextResponse.json({
       title: manuscript.title,
-      pages: finalPages,
+      pages: manuscript.pages,
       lesson: manuscript.lesson,
       verses: manuscript.verses,
     });
@@ -163,7 +170,7 @@ export async function POST(req: Request) {
     console.error('[Engine] Pipeline error:', error);
     return NextResponse.json({
       title: 'Aventura en pausa',
-      story: 'Efraín tuvo un problema. Por favor, intenta de nuevo.',
+      story: `Error técnico: ${error instanceof Error ? error.message : String(error)}`,
       lesson: 'La paciencia es un tesoro.',
       verses: [],
       pages: [],

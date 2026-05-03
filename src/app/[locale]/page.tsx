@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { Search, BookOpen, Users, Bookmark, Languages, Sparkles, Loader2, X, Heart, BookHeart, LogOut, MapPin, Palette, ChevronDown } from 'lucide-react';
+import { Search, BookOpen, Users, Bookmark, Languages, Sparkles, Loader2, X, Heart, BookHeart, LogOut, MapPin, Palette } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -25,6 +25,19 @@ interface IllustratedStory {
   verses: string[];
 }
 
+interface SearchResult {
+  ref: string;
+  he: string;
+  en: string;
+}
+
+interface AnalysisResult {
+  title: string;
+  story: string;
+  lesson: string;
+  verses: string[];
+}
+
 export default function IndexPage() {
   const t = useTranslations('Index');
   const c = useTranslations('Common');
@@ -33,9 +46,9 @@ export default function IndexPage() {
 
   const [query, setQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<SearchResult[]>([]);
   const [selectedAge, setSelectedAge] = useState('preschool');
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any>(null); // Supabase user type
 
   useEffect(() => {
     // Check current session
@@ -61,7 +74,7 @@ export default function IndexPage() {
   const [generationProgress, setGenerationProgress] = useState(0);
   const [story, setStory] = useState<IllustratedStory | null>(null);
 
-  const [analysis, setAnalysis] = useState<any>(null);
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
 
   const handleSearch = async () => {
     if (!query.trim()) return;
@@ -97,7 +110,8 @@ export default function IndexPage() {
     }
   };
 
-  const generateImageForPage = useCallback(async (imagePrompt: string, pageNumber: number): Promise<string | null> => {
+  const generateImageForPage = useCallback(async (imagePrompt: string, pageNumber: number, retryCount = 0): Promise<string | null> => {
+    const maxRetries = 2;
     try {
       const response = await fetch('/api/generate-image', {
         method: 'POST',
@@ -108,14 +122,26 @@ export default function IndexPage() {
       if (data.success && data.image) {
         return data.image;
       }
+      // Retry on failure
+      if (retryCount < maxRetries) {
+        console.log(`Retrying image generation for page ${pageNumber} (attempt ${retryCount + 1})`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
+        return generateImageForPage(imagePrompt, pageNumber, retryCount + 1);
+      }
       return null;
     } catch (error) {
       console.error(`Failed to generate image for page ${pageNumber}:`, error);
+      // Retry on network errors
+      if (retryCount < maxRetries) {
+        console.log(`Retrying image generation for page ${pageNumber} due to error (attempt ${retryCount + 1})`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+        return generateImageForPage(imagePrompt, pageNumber, retryCount + 1);
+      }
       return null;
     }
   }, []);
 
-  const handleGenerateStory = async (res: any) => {
+  const handleGenerateStory = async (res: SearchResult) => {
     setIsGenerating(true);
     setGenerationProgress(5);
     
@@ -401,6 +427,7 @@ export default function IndexPage() {
         <AnimatePresence mode="wait">
           {analysis && !story && (
             <motion.div 
+              key="analysis"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className="treasure-card mb-8 text-[#3D2B1F]"
@@ -427,6 +454,7 @@ export default function IndexPage() {
           {/* ─── GENERATION PROGRESS ─── */}
           {isGenerating && (
             <motion.div 
+              key="generating"
               initial={{ opacity: 0, scale: 0.9 }} 
               animate={{ opacity: 1, scale: 1 }} 
               className="generation-container"
@@ -459,6 +487,7 @@ export default function IndexPage() {
           {/* ─── ILLUSTRATED STORYBOOK VIEWER ─── */}
           {story && !isGenerating && (
             <motion.div 
+              key="story"
               id="story-view"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -496,19 +525,44 @@ export default function IndexPage() {
                       <div className="md:w-[45%] p-4 md:p-5 flex-shrink-0">
                         {page.image ? (
                           <div className="storybook-illustration">
-                            <img 
-                              src={page.image} 
+                            <Image
+                              src={page.image}
                               alt={page.sceneDescription || `Página ${page.pageNumber}`}
-                              className="w-full h-full object-cover"
+                              fill
+                              className="object-cover"
+                              onError={(e) => {
+                                console.error('Image failed to load:', page.image);
+                                // Could add retry logic here
+                              }}
                             />
                           </div>
                         ) : (
                           <div className="storybook-illustration-loading flex items-center justify-center">
                             <div className="text-center">
                               <Palette size={32} className="text-stone-400 mx-auto mb-2 animate-pulse" />
-                              <p className="text-xs text-stone-400 font-semibold">
+                              <p className="text-xs text-stone-400 font-semibold mb-2">
                                 {locale === 'es' ? 'Ilustrando...' : 'Illustrating...'}
                               </p>
+                              <button
+                                onClick={() => {
+                                  // Trigger re-generation for this specific page
+                                  const regenerateImage = async () => {
+                                    const newImage = await generateImageForPage(page.imagePrompt, page.pageNumber);
+                                    if (newImage) {
+                                      setStory(prev => {
+                                        if (!prev) return prev;
+                                        const updatedPages = [...prev.pages];
+                                        updatedPages[index] = { ...updatedPages[index], image: newImage };
+                                        return { ...prev, pages: updatedPages };
+                                      });
+                                    }
+                                  };
+                                  regenerateImage();
+                                }}
+                                className="text-xs text-amber-600 hover:text-amber-700 font-medium underline"
+                              >
+                                {locale === 'es' ? 'Reintentar' : 'Retry'}
+                              </button>
                             </div>
                           </div>
                         )}
@@ -592,6 +646,7 @@ export default function IndexPage() {
 
           {results.length > 0 && !story && !isGenerating && (
             <motion.div 
+              key="results"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
