@@ -1,27 +1,35 @@
 import { NextResponse } from 'next/server';
-import { generateStory } from '@/lib/gemini';
+import { getLLMClient } from '@/lib/llm-client';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { word, reference, hebrewText, translation, ageGroup, language } = body;
 
-    if (!process.env.GOOGLE_AI_API_KEY) {
-      return NextResponse.json({ error: 'API Key not configured' }, { status: 500 });
-    }
+    const llmClient = getLLMClient();
 
-    const storyData = await generateStory({
-      word,
-      reference,
-      hebrewText,
-      translation,
-      ageGroup,
-      language: language || 'es'
-    });
+    // Simple story generation using LLMClient
+    const prompt = `Generate a children's story about the biblical word "${word}" from ${reference}.
+Hebrew: ${hebrewText}, Translation: ${translation}.
+Age group: ${ageGroup}, Language: ${language || 'es'}.
+
+Return JSON format:
+{
+  "title": "Story Title",
+  "story": "The story content",
+  "lesson": "Moral lesson",
+  "verses": ["${reference}"]
+}`;
+
+    const content = await llmClient.callLLM(prompt);
+    const storyData = JSON.parse(content);
 
     return NextResponse.json(storyData);
   } catch (error) {
     console.error('Story generation error:', error);
-    return NextResponse.json({ error: 'Failed to generate story' }, { status: 500 });
+    return NextResponse.json({
+      error: 'Failed to generate story',
+      details: error instanceof Error ? error.message : String(error)
+    }, { status: 500 });
   }
 }
